@@ -26,18 +26,27 @@
 package net.roboconf.karaf.decanter.collector.dm;
 
 import java.util.HashMap;
-
-import org.osgi.framework.BundleEvent;
-import org.osgi.framework.SynchronousBundleListener;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
+
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.runtime.EventType;
+import net.roboconf.dm.management.events.IDmListener;
 
 /**
  * @author Amadou Diarra - UGA
  */
-public class BundleDecanterCollector implements SynchronousBundleListener {
+public class BundleDecanterCollector implements IDmListener {
 
-	private final EventAdmin eventAdmin;
+	EventAdmin eventAdmin;
+	final AtomicBoolean enabled = new AtomicBoolean( false );
+
 
 	/**
 	 * Constructs a bundle to collect informations.
@@ -47,15 +56,54 @@ public class BundleDecanterCollector implements SynchronousBundleListener {
 	}
 
 	@Override
-	public void bundleChanged(BundleEvent bunbleEvent) {
-		HashMap<String, Object> data = new HashMap<>();
-		data.put("type", "bundle");
-		data.put("change", bunbleEvent.getType());
-		data.put("id", bunbleEvent.getBundle().getBundleId());
-		data.put("location", bunbleEvent.getBundle().getLocation());
-		data.put("symbolicName", bunbleEvent.getBundle().getSymbolicName());
-		Event event = new Event("decanter/collect/bundle", data);
-		this.eventAdmin.postEvent(event);
+	public String getId() {
+		return "decanterCollectorID";
 	}
 
+	@Override
+	public void enableNotifications() {
+		this.enabled.set(true);
+	}
+
+	@Override
+	public void disableNotifications() {
+		this.enabled.set(false);
+	}
+
+	@Override
+	public void application(Application application, EventType eventType) {
+		// nothing
+	}
+
+	@Override
+	public void applicationTemplate(ApplicationTemplate tpl, EventType eventType) {
+		// nothing
+	}
+
+	@Override
+	public void instance(Instance instance, Application application, EventType eventType) {
+
+		if( this.enabled.get() && InstanceHelpers.isTarget(instance)) {
+
+			List<Instance> scopedInstances = InstanceHelpers.findAllScopedInstances(application);
+			int upInstances = 0;
+			for(Instance ins : scopedInstances) {
+				if(ins.getStatus() == InstanceStatus.DEPLOYED_STARTED) {
+					upInstances++;
+				}
+			}
+
+			HashMap<String,Object> data = new HashMap<>();
+			data.put("type", "roboconf");
+			data.put("appName", application.getName());
+			data.put("instanceNumber", upInstances);
+			Event event = new Event("decanter/collector/dm", data);
+			this.eventAdmin.postEvent(event);
+		}
+	}
+
+	@Override
+	public void raw(String message, Object... data) {
+		// nothing
+	}
 }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-   Copyright 2015-2017 Linagora, Université Joseph Fourier, Floralis
+   Copyright 2017 Linagora, Université Joseph Fourier, Floralis
 
    The present code is developed in the scope of the joint LINAGORA -
    Université Joseph Fourier - Floralis research program and is designated
@@ -44,6 +44,7 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
+			<scope>test</scope>
 		</dependency>
 		
 		<dependency>
@@ -55,60 +56,10 @@
 		
 		<dependency>
 			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-agent</artifactId>
+			<artifactId>roboconf-dm</artifactId>
 			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
-
-		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-messaging-api</artifactId>
-			<version>${project.version}</version>
-			<scope>provided</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-plugin-api</artifactId>
-			<version>${project.version}</version>
-			<scope>provided</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.karaf.shell</groupId>
-			<artifactId>org.apache.karaf.shell.console</artifactId>
-			<version>${karaf.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>org.osgi</groupId>
-			<artifactId>org.osgi.core</artifactId>
-			<version>4.3.1</version>
-			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.compendium</artifactId>
-            <version>4.3.1</version>
-            <scope>provided</scope>
-        </dependency>
-		
-		<dependency>
-    		<groupId>org.apache.karaf.services</groupId>
-    		<artifactId>org.apache.karaf.services.eventadmin</artifactId>
-    		<version>4.1.1</version>
-    		<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
-    		<groupId>org.osgi</groupId>
-    		<artifactId>org.osgi.util.tracker</artifactId>
-    		<version>1.5.1</version>
-    		<scope>provided</scope>
-		</dependency>
-		
 		
 		<dependency>
   			<groupId>org.osgi</groupId>
@@ -121,13 +72,6 @@
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
 			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-			   <groupId>org.apache.felix</groupId>
-			   <artifactId>org.apache.felix.ipojo</artifactId>
-			   <version>${ipojo.version}</version>
-			   <scope>provided</scope>
 		</dependency>
 		
 		<dependency>
@@ -147,15 +91,23 @@
 				<configuration>
 					<instructions>
 						<Import-Package>
-							net.roboconf.core.*;version="${version.range}",
-							org.apache.felix.service.command,
-							org.apache.karaf.shell.commands,
-							org.apache.karaf.shell.console,
+							net.roboconf.*;version="${version.range}",
 							*
 						</Import-Package>
-						<Karaf-Commands>*</Karaf-Commands>
 					</instructions>
 				</configuration>
+			</plugin>
+			
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-ipojo-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>ipojo-bundle</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
