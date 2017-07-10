@@ -59,9 +59,10 @@ import net.roboconf.core.utils.Utils;
  * Modularity-breaking validator for recipes.
  * <p>
  * A class that centralizes validation for recipes. Recipes handlers are usually
- * plugged through extensions. It would have been logical to plug extra-validation in the same
- * way. However, Roboconf's core module aims at being a stand-alone library that can be used at
- * runtime but also in external tools.
+ * plugged through extensions. It would have been logical to plug
+ * extra-validation in the same way. However, Roboconf's core module aims at
+ * being a stand-alone library that can be used at runtime but also in external
+ * tools.
  * </p>
  * <p>
  * This is why we allow this class to break modularity.<br>
@@ -74,7 +75,6 @@ public final class RecipesValidator {
 
 	public static final String SCRIPTS_DIR_NAME = "scripts";
 
-
 	/**
 	 * Private empty constructor.
 	 */
@@ -82,96 +82,108 @@ public final class RecipesValidator {
 		// nothing
 	}
 
-
 	/**
 	 * Validates the recipes of a component.
-	 * @param applicationFilesDirectory the application's directory
-	 * @param component the component
+	 * 
+	 * @param applicationFilesDirectory
+	 *            the application's directory
+	 * @param component
+	 *            the component
 	 * @return a non-null list of errors
 	 */
-	public static List<ModelError> validateComponentRecipes( File applicationFilesDirectory, Component component ) {
+	public static List<ModelError> validateComponentRecipes(File applicationFilesDirectory, Component component) {
 
 		List<ModelError> result;
-		if( "puppet".equalsIgnoreCase( component.getInstallerName()))
-			result = validatePuppetComponent( applicationFilesDirectory, component );
-		else if( "script".equalsIgnoreCase( component.getInstallerName()))
-			result = validateScriptComponent( applicationFilesDirectory, component );
+		if ("puppet".equalsIgnoreCase(component.getInstallerName()))
+			result = validatePuppetComponent(applicationFilesDirectory, component);
+		else if ("script".equalsIgnoreCase(component.getInstallerName()))
+			result = validateScriptComponent(applicationFilesDirectory, component);
 		else
 			result = Collections.emptyList();
 
 		return result;
 	}
 
-
 	/**
 	 * Validates a component associated with the Puppet installer.
-	 * @param applicationFilesDirectory the application's directory
-	 * @param component the component
+	 * 
+	 * @param applicationFilesDirectory
+	 *            the application's directory
+	 * @param component
+	 *            the component
 	 * @return a non-null list of errors
 	 */
-	private static List<ModelError> validateScriptComponent( File applicationFilesDirectory, Component component ) {
-		List<ModelError> result = new ArrayList<> ();
+	private static List<ModelError> validateScriptComponent(File applicationFilesDirectory, Component component) {
+		List<ModelError> result = new ArrayList<>();
 
 		// There must be a "scripts" directory
-		File directory = ResourceUtils.findInstanceResourcesDirectory( applicationFilesDirectory, component );
-		File scriptsDir = new File( directory, SCRIPTS_DIR_NAME );
-		if( ! scriptsDir.exists())
-			result.add( new ModelError( ErrorCode.REC_SCRIPT_NO_SCRIPTS_DIR, component, component( component )));
+		File directory = ResourceUtils.findInstanceResourcesDirectory(applicationFilesDirectory, component);
+		File scriptsDir = new File(directory, SCRIPTS_DIR_NAME);
+		List<File> scriptsList = Utils.listAllFiles(scriptsDir);
+
+		if (!scriptsDir.exists())
+			result.add(new ModelError(ErrorCode.REC_SCRIPT_NO_SCRIPTS_DIR, component, component(component)));
+		else if (scriptsList.isEmpty()) {
+			// nothing
+		}
 
 		return result;
 	}
 
-
 	/**
 	 * Validates a component associated with the Puppet installer.
-	 * @param applicationFilesDirectory the application's directory
-	 * @param component the component
+	 * 
+	 * @param applicationFilesDirectory
+	 *            the application's directory
+	 * @param component
+	 *            the component
 	 * @return a non-null list of errors
 	 */
-	private static List<ModelError> validatePuppetComponent( File applicationFilesDirectory, Component component ) {
-		List<ModelError> result = new ArrayList<> ();
+	private static List<ModelError> validatePuppetComponent(File applicationFilesDirectory, Component component) {
+		List<ModelError> result = new ArrayList<>();
 
 		// Check imports
-		for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( component ).values()) {
-			if( var.getName().endsWith( "." + Constants.WILDCARD )) {
-				result.add( new ModelError( ErrorCode.REC_PUPPET_DISLIKES_WILDCARD_IMPORTS, component, component( component )));
+		for (ImportedVariable var : ComponentHelpers.findAllImportedVariables(component).values()) {
+			if (var.getName().endsWith("." + Constants.WILDCARD)) {
+				result.add(new ModelError(ErrorCode.REC_PUPPET_DISLIKES_WILDCARD_IMPORTS, component,
+						component(component)));
 				break;
 			}
 		}
 
 		// There must be a Puppet module that starts with "roboconf_"
-		File directory = ResourceUtils.findInstanceResourcesDirectory( applicationFilesDirectory, component );
+		File directory = ResourceUtils.findInstanceResourcesDirectory(applicationFilesDirectory, component);
 		File[] children = directory.listFiles();
-		children = children == null ? new File[ 0 ] : children;
-		List<File> modules = new ArrayList<> ();
-		for( File f : children ) {
-			if( f.isDirectory() && f.getName().toLowerCase().startsWith( "roboconf_" ))
-				modules.add( f );
+		children = children == null ? new File[0] : children;
+		List<File> modules = new ArrayList<>();
+		for (File f : children) {
+			if (f.isDirectory() && f.getName().toLowerCase().startsWith("roboconf_"))
+				modules.add(f);
 		}
 
-		if( modules.isEmpty())
-			result.add( new ModelError( ErrorCode.REC_PUPPET_HAS_NO_RBCF_MODULE, component, component( component )));
-		else if( modules.size() > 1 )
-			result.add( new ModelError( ErrorCode.REC_PUPPET_HAS_TOO_MANY_RBCF_MODULES, component, component( component )));
+		if (modules.isEmpty())
+			result.add(new ModelError(ErrorCode.REC_PUPPET_HAS_NO_RBCF_MODULE, component, component(component)));
+		else if (modules.size() > 1)
+			result.add(new ModelError(ErrorCode.REC_PUPPET_HAS_TOO_MANY_RBCF_MODULES, component, component(component)));
 
 		// Analyze the module parameters
-		if( modules.size() == 1 ) {
-			File pp1 = new File( modules.get( 0 ), "manifests/update.pp" );
-			File pp2 = new File( modules.get( 0 ), "manifests/init.pp" );
+		if (modules.size() == 1) {
+			File pp1 = new File(modules.get(0), "manifests/update.pp");
+			File pp2 = new File(modules.get(0), "manifests/init.pp");
 			File withUpdateParams = pp1.exists() ? pp1 : pp2;
 
 			// Validate the files
-			children = new File( modules.get( 0 ), "manifests" ).listFiles();
-			children = children == null ? new File[ 0 ] : children;
-			for( File f : children ) {
+			children = new File(modules.get(0), "manifests").listFiles();
+			children = children == null ? new File[0] : children;
+			for (File f : children) {
 				try {
-					if( f.isFile() && f.getName().toLowerCase().endsWith( ".pp" ))
-						checkPuppetFile( f, f.equals( withUpdateParams ), component, result );
+					if (f.isFile() && f.getName().toLowerCase().endsWith(".pp"))
+						checkPuppetFile(f, f.equals(withUpdateParams), component, result);
 
-				} catch( IOException e ) {
-					Logger logger = Logger.getLogger( RecipesValidator.class.getName());
-					logger.warning( "The content of the Puppet file '" + f + "' could not be read." );
-					Utils.logException( logger, e );
+				} catch (IOException e) {
+					Logger logger = Logger.getLogger(RecipesValidator.class.getName());
+					logger.warning("The content of the Puppet file '" + f + "' could not be read.");
+					Utils.logException(logger, e);
 				}
 			}
 		}
@@ -179,71 +191,77 @@ public final class RecipesValidator {
 		return result;
 	}
 
-
 	/**
 	 * Reads a Puppet script and validates it.
-	 * @param pp the Puppet script
-	 * @param withUpdateParams true if update parameters should be present
-	 * @param component the component
-	 * @param errors a non-null list of errors
-	 * @throws IOException if the file content could be read
+	 * 
+	 * @param pp
+	 *            the Puppet script
+	 * @param withUpdateParams
+	 *            true if update parameters should be present
+	 * @param component
+	 *            the component
+	 * @param errors
+	 *            a non-null list of errors
+	 * @throws IOException
+	 *             if the file content could be read
 	 */
-	private static void checkPuppetFile( File pp, boolean withUpdateParams, Component component, Collection<ModelError> errors )
-	throws IOException {
+	private static void checkPuppetFile(File pp, boolean withUpdateParams, Component component,
+			Collection<ModelError> errors) throws IOException {
 
 		// Try to use the Puppet validator
-		String[] cmd = { "puppet", "parser", "validate", pp.getAbsolutePath()};
-		Logger logger = Logger.getLogger( RecipesValidator.class.getName());
+		String[] cmd = { "puppet", "parser", "validate", pp.getAbsolutePath() };
+		Logger logger = Logger.getLogger(RecipesValidator.class.getName());
 		try {
-			int execCode = ProgramUtils.executeCommand( logger, cmd, null, null, null, null );
-			if( execCode != 0 )
-				errors.add( new ModelError( ErrorCode.REC_PUPPET_SYNTAX_ERROR, component, component( component ), file( pp )));
+			int execCode = ProgramUtils.executeCommand(logger, cmd, null, null, null, null);
+			if (execCode != 0)
+				errors.add(
+						new ModelError(ErrorCode.REC_PUPPET_SYNTAX_ERROR, component, component(component), file(pp)));
 
-		} catch( Exception e ) {
-			logger.info( "Puppet parser is not available on the machine." );
+		} catch (Exception e) {
+			logger.info("Puppet parser is not available on the machine.");
 		}
 
 		// We do not validate with puppet-lint.
 		// Indeed, this tool is mostly about coding style and conventions.
 
 		// Extract the script parameters
-		Pattern pattern = Pattern.compile( "class [^(]+\\(([^)]+)\\)", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL );
-		String content = Utils.readFileContent( pp );
-		Matcher m = pattern.matcher( content );
+		Pattern pattern = Pattern.compile("class [^(]+\\(([^)]+)\\)",
+				Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
+		String content = Utils.readFileContent(pp);
+		Matcher m = pattern.matcher(content);
 
-		Set<String> params = new HashSet<> ();
-		if( ! m.find())
+		Set<String> params = new HashSet<>();
+		if (!m.find())
 			return;
 
-		for( String s : m.group( 1 ).split( "," )) {
-			Entry<String,String> entry = VariableHelpers.parseExportedVariable( s.trim());
-			params.add( entry.getKey());
+		for (String s : m.group(1).split(",")) {
+			Entry<String, String> entry = VariableHelpers.parseExportedVariable(s.trim());
+			params.add(entry.getKey());
 		}
 
 		// Check the update parameters
-		if( withUpdateParams ) {
-			if( ! params.remove( "$importDiff" ))
-				errors.add( new ModelError( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_DIFF, component, component( component ), file( pp )));
+		if (withUpdateParams) {
+			if (!params.remove("$importDiff"))
+				errors.add(new ModelError(ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_DIFF, component,
+						component(component), file(pp)));
 		}
 
 		// Prevent errors with start.pp, etc
-		params.remove( "$importDiff" );
+		params.remove("$importDiff");
 
 		// Check the other ones
-		if( ! params.remove( "$runningState" ))
-			errors.add( new ModelError( ErrorCode.REC_PUPPET_MISSING_PARAM_RUNNING_STATE, component, component( component ), file( pp )));
+		if (!params.remove("$runningState"))
+			errors.add(new ModelError(ErrorCode.REC_PUPPET_MISSING_PARAM_RUNNING_STATE, component, component(component),
+					file(pp)));
 
 		// Imports imply some variables are expected
-		Instance fake = new Instance( "fake" ).component( component );
-		for( String facetOrComponentName : VariableHelpers.findPrefixesForImportedVariables( fake )) {
-			if( ! params.remove( "$" + facetOrComponentName.toLowerCase())) {
-				ErrorDetails[] details = new ErrorDetails[] {
-						name( component.getName()),
-						file( pp ),
-						expected( facetOrComponentName.toLowerCase())
-				};
+		Instance fake = new Instance("fake").component(component);
+		for (String facetOrComponentName : VariableHelpers.findPrefixesForImportedVariables(fake)) {
+			if (!params.remove("$" + facetOrComponentName.toLowerCase())) {
+				ErrorDetails[] details = new ErrorDetails[] { name(component.getName()), file(pp),
+						expected(facetOrComponentName.toLowerCase()) };
 
-				errors.add( new ModelError( ErrorCode.REC_PUPPET_MISSING_PARAM_FROM_IMPORT, component, details ));
+				errors.add(new ModelError(ErrorCode.REC_PUPPET_MISSING_PARAM_FROM_IMPORT, component, details));
 			}
 		}
 	}
