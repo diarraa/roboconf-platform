@@ -1,8 +1,8 @@
-name = ${NAME}
-version = ${VERSION}
+application-name = ${NAME}
+application-version = ${VERSION}
 
-dsl-id = roboconf-1.0
-description = ${DESCRIPTION}
+application-dsl-id = roboconf-1.0
+application-description = ${DESCRIPTION}
 
 graph-entry-point = main.graph
 instance-entry-point = model.instances
